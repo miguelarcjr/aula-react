@@ -7,16 +7,42 @@ export default class Perfil extends Component {
     state = {
         nome: '',
         foto: '',
-        user: ''
+        user: '',
+        seguidores: '',
+        seguindo: '',
+        quantidadeRepositorio: '',
+        ultimoRepositorio: '',
     }
 
     loadNome = async (usuario) => {
+        let ult = 0;
         const response = await api.get('/'+usuario)
-        const user = response.data
+        const user = response.data;
+        
+        const responseRepository = await api.get('/'+usuario+'/repos');
+        const repository = responseRepository.data;
+        
+        await repository.map(repo => {
+            console.log(repo.id, Number(repo.id) >= Number(ult), repo.full_name);
+          if(Number(repo.id) >= Number(ult)) {
+            ult = repo.id;
+          } 
+        });
+
+        const repositoryEnd = await repository.find( repo => {
+            //console.log(repo);
+            return ult === repo.id; 
+        });
+
+        console.log(JSON.stringify(repositoryEnd))
 
         this.setState({
             nome: user.name,
-            foto: user.avatar_url
+            foto: user.avatar_url,
+            seguidores: user.followers,
+            seguindo: user.following,
+            quantidadeRepositorio: user.public_repos,
+            ultimoRepositorio: repository[0].full_name,
         })
     }
 
@@ -35,21 +61,36 @@ export default class Perfil extends Component {
 
         return (
             <View style={ styles.container }>
-                <TextInput style={ styles.textInput } onChangeText={ this.handleUser } ></TextInput>
+                <Image style={ styles.foto } source={ pic } />
+                <Text style={ styles.texto }> 
+                    {this.state.nome === '' ? '' : 'Usuário:'} { this.state.nome }
+                </Text>
+                <Text style={ styles.texto }>
+                    {this.state.nome === '' ? '' : 'Seguidores:'} { this.state.seguidores }
+                </Text>
+                <Text style={ styles.texto }>
+                    {this.state.nome === '' ? '' : 'Seguindo:'} { this.state.seguindo }
+                </Text>
+                <Text style={ styles.texto }>
+                    {this.state.nome === '' ? '' : 'Quantidade De Repositórios:'} { this.state.quantidadeRepositorio }
+                </Text>
+                <Text style={ styles.texto }>
+                    {this.state.nome === '' ? '' : 'Último Repositório:'} { this.state.ultimoRepositorio }
+                </Text>
+
+                <TextInput style={ styles.textInput } onChangeText={ this.handleUser } value={this.state.user} placeholder="Nick GitHub"></TextInput>
                 <TouchableOpacity style={ styles.button } onPress={ this.handleButton } >
                     <Text style={ styles.buttonText }>Enviar</Text>
                 </TouchableOpacity>
-                <Text style={ styles.nome }>{ this.state.nome }</Text>
-                <Image style={ styles.foto } source={ pic } />
             </View>
         )
     }
 }
 
 const styles = StyleSheet.create({
-    nome: {
+    texto: {
       fontFamily: 'Roboto',
-      fontSize: '2em',
+      //fontSize: '2em',
       color: '#f55',
       fontWeight: 'bold'
     },
@@ -67,9 +108,12 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff', 
         marginTop: 20, 
         borderRadius: 10,
-        border: '5px solid',
+        //border: '5px solid',
         padding: 10, 
-        fontSize: '1.2em', 
+        borderWidth: 1,
+        borderColor: 'red',
+        borderStyle: 'solid',
+        //fontSize: '1.2em', 
         textAlign: 'center', 
         color: '#f55'
     },
